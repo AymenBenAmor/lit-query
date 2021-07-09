@@ -5,6 +5,7 @@
  */
 
 import {LitElement, html, css} from 'lit';
+import {AsyncController} from './AsyncController';
 
 /**
  * An example element.
@@ -24,38 +25,33 @@ export class MyElement extends LitElement {
     `;
   }
 
-  static get properties() {
-    return {
-      /**
-       * The name to say "Hello" to.
-       */
-      name: {type: String},
-
-      /**
-       * The number of times the button has been clicked.
-       */
-      count: {type: Number},
-    };
-  }
-
   constructor() {
     super();
-    this.name = 'World';
-    this.count = 0;
+    this.call1 = new AsyncController(this, this.getPokemons, {
+      autoCall: true
+    });
+  }
+
+  getPokemons() {
+    return fetch('https://pokeapi.co/api/v2/pokemon').then(response => response.json())
   }
 
   render() {
-    return html`
-      <h1>Hello, ${this.name}!</h1>
-      <button @click=${this._onClick} part="button">
-        Click Count: ${this.count}
-      </button>
-      <slot></slot>
-    `;
-  }
+    const { status, error, result, isError, isLoading, isSuccess, isRefetching, run } = this.call1;
+    if (isLoading) {
+      return html`<span>Loading...</span>`;
+    }
 
-  _onClick() {
-    this.count++;
+    if (isError) {
+      return html`<span>Error: ${error.message}</span>`;
+    }
+
+    return isSuccess ? html`
+      <span>
+        ${JSON.stringify(result)}
+      </span>
+      <button @click=${() => run()} >Click me to refresh</button>
+    ` : ''
   }
 }
 
